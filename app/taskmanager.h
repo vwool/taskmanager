@@ -18,6 +18,7 @@ public:
     explicit TaskManager(QObject* parent = nullptr);
 
     Q_INVOKABLE void open(const QUrl& url);
+    Q_INVOKABLE void kill(int tid);
     QTimer *timer;
 
 signals:
@@ -26,7 +27,8 @@ signals:
 	void removeProcess(int tid_);
 
 private slots:
-	void callService();
+	void query();
+	void callService(const QString& ccommand, QJsonValue value);
 	void onSocketTextReceived(QString msg);
 
 private:
