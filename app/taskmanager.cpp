@@ -15,24 +15,34 @@ TaskManager::TaskManager(QObject* parent) : QObject(parent) {
 void TaskManager::open(const QUrl &bindingAddress) {
 	m_socket.open(bindingAddress);
 	timer = new QTimer();
-	connect(timer, SIGNAL(timeout()), this, SLOT(callService()));
+	connect(timer, SIGNAL(timeout()), this, SLOT(query()));
 	timer->start(3000);
 }
 
-void TaskManager::callService() {
+void TaskManager::kill(int tid) {
+	qDebug() << "killing " << tid;
+	callService(QString("kill_process"), QJsonValue(tid));
+}
+
+void TaskManager::query() {
+	qDebug() << "querying";
+	callService(QString("get_process_list"), QJsonValue());
+}
+
+void TaskManager::callService(const QString& command, QJsonValue value) {
 	qDebug() << "Entered callService";
 
 	QJsonArray msg;
 	msg.append(2); // Call
 	msg.append(QString::number(m_nextCallId));
-	msg.append(QString("taskmanager/get_process_list"));
-	msg.append(QJsonValue());
+	msg.append(QString("taskmanager/") + command);
+	msg.append(value);
 	m_nextCallId++;
 
-	QJsonDocument value;
-	value.setArray(msg);
+	QJsonDocument jsonDoc;
+	jsonDoc.setArray(msg);
 
-	m_socket.sendTextMessage(value.toJson(QJsonDocument::Compact));
+	m_socket.sendTextMessage(jsonDoc.toJson(QJsonDocument::Compact));
 }
 
 void TaskManager::onSocketTextReceived(QString msg)
